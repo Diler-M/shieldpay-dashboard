@@ -12,8 +12,13 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
+  const cardId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return res.status(400).json({ message: "Invalid card id" });
+  }
+
   // ARKO-LAB-04: Returns full PAN and CVV (unsafe by design for lab).
-  const card = db.prepare("SELECT * FROM cards WHERE id = ?").get(req.params.id);
+  const card = db.prepare("SELECT * FROM cards WHERE id = ? AND merchant_id = ?").get(cardId, req.user.merchant_id);
   if (!card) {
     return res.status(404).json({ message: "Not found" });
   }
@@ -30,16 +35,24 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
   const { cardholder_name, pan, expiry_month, expiry_year, cvv } = req.body;
-  // ARKO-LAB-02: Missing ownership check by merchant_id.
+  const cardId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return res.status(400).json({ message: "Invalid card id" });
+  }
+
   db.prepare(
-    "UPDATE cards SET cardholder_name = ?, pan = ?, expiry_month = ?, expiry_year = ?, cvv = ? WHERE id = ?"
-  ).run(cardholder_name, pan, expiry_month, expiry_year, cvv, req.params.id);
+    "UPDATE cards SET cardholder_name = ?, pan = ?, expiry_month = ?, expiry_year = ?, cvv = ? WHERE id = ? AND merchant_id = ?"
+  ).run(cardholder_name, pan, expiry_month, expiry_year, cvv, cardId, req.user.merchant_id);
   return res.json({ ok: true });
 });
 
 router.delete("/:id", (req, res) => {
-  // ARKO-LAB-02: Missing ownership check by merchant_id.
-  db.prepare("DELETE FROM cards WHERE id = ?").run(req.params.id);
+  const cardId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(cardId) || cardId <= 0) {
+    return res.status(400).json({ message: "Invalid card id" });
+  }
+
+  db.prepare("DELETE FROM cards WHERE id = ? AND merchant_id = ?").run(cardId, req.user.merchant_id);
   return res.json({ ok: true });
 });
 

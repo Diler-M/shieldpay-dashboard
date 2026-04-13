@@ -2,6 +2,119 @@
 
 This document tracks the security assessment and remediation of ShieldPay using ARKO inside Cursor.
 
+## ✅ Remediation Phase 2 – Access Control (RBAC + IDOR)
+
+### Current Status
+
+- Phase 1: Injection ✅
+- Phase 2: Access Control (RBAC + IDOR) ✅
+- Phase 3: Sensitive Data Protection 🚧 (in progress)
+
+### Overview
+
+This phase focused on resolving critical authorization vulnerabilities across the platform, including missing role-based access control and insecure direct object reference (IDOR) issues.
+
+These vulnerabilities allowed authenticated users to access or modify data outside of their intended scope, including administrative data and resources belonging to other merchants.
+
+---
+
+### 🔐 Issues Addressed
+
+#### Role-Based Access Control (RBAC)
+
+* Missing RBAC on `/admin/users`
+* Missing RBAC on `/admin/merchants`
+* Missing authorization on `/impersonate/:id`
+
+#### Insecure Direct Object References (IDOR)
+
+* Cards:
+
+  * GET card details
+  * PUT card update
+  * DELETE card
+* Customers:
+
+  * GET customer
+  * PUT customer update
+  * DELETE customer
+* Transactions:
+
+  * GET transaction detail
+
+---
+
+### 🛠️ Fix Implementation
+
+#### 1. Enforced Role-Based Access Control
+
+* Added role validation for all admin routes:
+
+  * `req.user.role === 'admin'`
+* Restricted impersonation functionality to admin users only
+* Returned `403 Forbidden` for unauthorized access attempts
+
+#### 2. Implemented Ownership Validation (Tenant Isolation)
+
+* Introduced `merchant_id` checks across all resource queries
+* Ensured all database operations are scoped to the authenticated user:
+
+  * `SELECT`, `UPDATE`, `DELETE` queries updated to include `merchant_id`
+* Used `req.user.merchant_id` as the source of truth for access control
+
+#### 3. Secure Query Patterns
+
+* Updated all resource queries to enforce ownership:
+
+```sql
+SELECT * FROM cards WHERE id = ? AND merchant_id = ?
+UPDATE customers SET ... WHERE id = ? AND merchant_id = ?
+DELETE FROM transactions WHERE id = ? AND merchant_id = ?
+```
+
+---
+
+### 📊 Impact
+
+* Eliminated all identified IDOR vulnerabilities across the platform
+* Prevented cross-tenant data access between merchants
+* Secured administrative endpoints from unauthorized users
+* Reduced multiple Critical and High severity findings
+
+---
+
+### 🧠 Security Insight
+
+This phase highlights a common real-world issue in web applications:
+
+> Authentication does not equal authorization.
+
+Even with valid JWT authentication, users must be explicitly restricted to only the resources they are permitted to access.
+
+Failure to enforce this leads to:
+
+* Data leakage
+* Privilege escalation
+* Cross-tenant access violations
+
+---
+
+### 📈 Result
+
+* Significant reduction in vulnerability count
+* Hackable score improved from ~76% → 72%
+* All access control and IDOR-related findings resolved
+
+---
+
+### 📌 Notes
+
+All fixes were implemented iteratively using ARKO inside Cursor, following a consistent:
+
+**Build → Scan → Fix → Re-scan**
+
+workflow to validate remediation effectiveness.
+
 ## Baseline
 
 * Initial hackable score: **80%**

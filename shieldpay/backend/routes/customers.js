@@ -15,7 +15,12 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
-  const customer = db.prepare("SELECT * FROM customers WHERE id = ?").get(req.params.id);
+  const customerId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(customerId) || customerId <= 0) {
+    return res.status(400).json({ message: "Invalid customer id" });
+  }
+
+  const customer = db.prepare("SELECT * FROM customers WHERE id = ? AND merchant_id = ?").get(customerId, req.user.merchant_id);
   if (!customer) {
     return res.status(404).json({ message: "Not found" });
   }
@@ -32,15 +37,23 @@ router.post("/", (req, res) => {
 
 router.put("/:id", (req, res) => {
   const { name, email, phone } = req.body;
-  // ARKO-LAB-02: Missing ownership check (merchant_id not verified).
-  db.prepare("UPDATE customers SET name = ?, email = ?, phone = ? WHERE id = ?")
-    .run(name, email, phone, req.params.id);
+  const customerId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(customerId) || customerId <= 0) {
+    return res.status(400).json({ message: "Invalid customer id" });
+  }
+
+  db.prepare("UPDATE customers SET name = ?, email = ?, phone = ? WHERE id = ? AND merchant_id = ?")
+    .run(name, email, phone, customerId, req.user.merchant_id);
   return res.json({ ok: true });
 });
 
 router.delete("/:id", (req, res) => {
-  // ARKO-LAB-02: Missing ownership check allows cross-merchant deletion.
-  db.prepare("DELETE FROM customers WHERE id = ?").run(req.params.id);
+  const customerId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(customerId) || customerId <= 0) {
+    return res.status(400).json({ message: "Invalid customer id" });
+  }
+
+  db.prepare("DELETE FROM customers WHERE id = ? AND merchant_id = ?").run(customerId, req.user.merchant_id);
   return res.json({ ok: true });
 });
 

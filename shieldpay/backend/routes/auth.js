@@ -50,7 +50,16 @@ router.post("/reset-password", (req, res) => {
 });
 
 router.post("/impersonate/:id", requireAuth, (req, res) => {
-  const target = db.prepare("SELECT * FROM users WHERE id = ?").get(req.params.id);
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const targetId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(targetId) || targetId <= 0) {
+    return res.status(400).json({ message: "Invalid user id" });
+  }
+
+  const target = db.prepare("SELECT * FROM users WHERE id = ?").get(targetId);
   if (!target) {
     return res.status(404).json({ message: "User not found" });
   }

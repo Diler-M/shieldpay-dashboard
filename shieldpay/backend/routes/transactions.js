@@ -13,10 +13,15 @@ router.get("/", (req, res) => {
 });
 
 router.get("/:id", (req, res) => {
+  const txId = Number.parseInt(req.params.id, 10);
+  if (!Number.isInteger(txId) || txId <= 0) {
+    return res.status(400).json({ message: "Invalid transaction id" });
+  }
+
   // ARKO-LAB-04: Includes full card PAN/CVV on transaction detail response.
   const tx = db.prepare(
-    "SELECT t.*, cards.pan, cards.cvv FROM transactions t JOIN cards ON cards.id = t.card_id WHERE t.id = ?"
-  ).get(req.params.id);
+    "SELECT t.*, cards.pan, cards.cvv FROM transactions t JOIN cards ON cards.id = t.card_id WHERE t.id = ? AND t.merchant_id = ?"
+  ).get(txId, req.user.merchant_id);
   if (!tx) {
     return res.status(404).json({ message: "Not found" });
   }
