@@ -1,43 +1,31 @@
-# ShieldPay – AI-Built Payment Platform (DevSecOps Security Lab)
+# ShieldPay – DevSecOps Security Case Study
 
-A full-stack payment dashboard built using AI (Cursor), intentionally deployed with security vulnerabilities, and currently being secured using ARKO inside Cursor.
+A full-stack payment platform built using AI (Cursor), then secured using ARKO through an iterative DevSecOps workflow.
 
-This project demonstrates a real-world DevSecOps workflow:
-
-**Build → Scan → Fix → Re-scan**
+This project demonstrates how AI-generated applications can introduce real-world vulnerabilities — and how those risks can be systematically identified, prioritised, and remediated.
 
 ---
 
-## 🚨 Project Purpose
+## 🔐 DevSecOps Security Case Study
 
-Modern teams are increasingly shipping AI-generated code — often without proper security validation.
+### 🚀 What This Project Demonstrates
 
-This project simulates that real-world scenario:
-
-* Build a working application using AI
-* Identify real vulnerabilities using ARKO
-* Remediate issues iteratively using secure coding practices
-
-> ⚠️ Note: The initial version of this application intentionally contains insecure patterns for learning and demonstration purposes.
+* Identified and remediated **SQL Injection, IDOR, and RBAC vulnerabilities**
+* Secured **sensitive financial data** (PCI-aligned practices)
+* Hardened **authentication, token handling, and API security**
+* Performed multiple **Build → Scan → Fix → Re-scan cycles**
+* Analysed **system-level risks including payment logic and impersonation design**
 
 ---
 
-## 📊 Current Metrics
+## 📊 Results
 
-* Initial hackable score: **80%**
-* Current hackable score: **78%**
-* ARKO findings at baseline: **19**
+* Initial vulnerabilities: **19 (9 Critical, 10 High)**
+* Peak findings after re-scan: **32 (expanded attack surface)**
+* Vulnerabilities remediated: **14+**
+* Final state: Major risks eliminated, remaining issues at architectural level
 
-  * **9 Critical**
-  * **10 High**
-* First remediation completed: **SQL Injection in customer search**
-
----
-
-## 📄 Security Evidence
-
-* Full ARKO export: [`security-report-2026-04-07.html`](./security-report-2026-04-07.html)
-* Detailed remediation tracker: [`SECURITY-LAB.md`](./SECURITY-LAB.md)
+👉 Full breakdown: [SECURITY-LAB.md](./SECURITY-LAB.md)
 
 ---
 
@@ -57,59 +45,74 @@ Browser → API → Database
 ## ⚙️ Features
 
 * User authentication (JWT-based)
-* Customer management
-* Card storage and transaction processing (demo data only)
-* Admin dashboard
-* Revenue analytics
-* REST API with shared origin (no proxy)
+* Customer and card management
+* Payment processing (demo logic)
+* Admin dashboard and analytics
+* REST API with shared origin
 
 ---
 
-## 🛑 Initial Security Findings (ARKO)
+## 🛑 Initial Security Findings
 
-The AI-generated baseline application contains multiple real-world vulnerabilities identified by ARKO:
+The AI-generated baseline application contained multiple critical vulnerabilities:
 
-* SQL Injection vulnerabilities in API endpoints
-* Broken access control (missing ownership checks)
-* Admin routes missing role-based access control
-* Sensitive data exposure (full card details & CVV)
-* Weak secret management (JWT fallback secret)
-* Logging of sensitive information
-* Verbose error handling exposing internal details
-* Plaintext storage of sensitive financial data
-
-These reflect common issues found in AI-generated and poorly secured applications.
+* SQL Injection in API queries
+* Broken access control and IDOR vulnerabilities
+* Missing role-based access control on admin routes
+* Sensitive data exposure (PAN, CVV)
+* Weak secret management
+* Verbose error handling and sensitive logging
+* Plaintext storage of financial data
 
 ---
 
-## 🔐 Current Remediation Progress
+## 🔐 Security Remediation Overview
 
-### ✅ Fixed
+The application was secured through multiple iterative phases:
 
-* **SQL Injection (customers endpoint)**
+### Phase 1–2: Core Security Fixes
 
-  * Replaced string concatenation with parameterized queries using `better-sqlite3`
-  * Prevents attacker-controlled input from altering SQL execution
+* Eliminated SQL injection
+* Implemented RBAC across admin endpoints
+* Resolved IDOR vulnerabilities using tenant isolation
 
-### 🚧 In Progress
+### Phase 3: Sensitive Data Protection
 
-The following vulnerabilities are currently being addressed using ARKO:
+* Removed CVV storage
+* Masked PAN values
+* Secured API responses and frontend rendering
 
-* Broken access control (resource ownership validation)
-* Missing admin role checks
-* Sensitive data exposure in API responses
-* Insecure logging of request data
-* Weak secret handling
-* Verbose error leakage
-* Plaintext storage of card data
+### Phase 4–5: Authentication & Secrets Hardening
+
+* Removed token exposure from auth flows
+* Secured API key handling
+* Eliminated hardcoded secrets
+* Enforced authorization in payment processing
+
+### Phase 6: Security Maturity
+
+* Identified architectural and business logic risks
+* Analysed impersonation design and payment logic weaknesses
+* Applied risk-based prioritisation
 
 ---
 
-## 📊 ARKO Scan Status
+## 🧠 Key Learning
 
-* Initial scan identified multiple **Critical and High severity vulnerabilities**
-* First remediation completed (SQL Injection)
-* Further fixes ongoing using ARKO-guided workflow
+Security is not about eliminating vulnerabilities — it is about **reducing risk through continuous iteration and prioritisation**.
+
+This project demonstrates how vulnerabilities evolve from:
+
+* simple code issues
+  to
+* complex system-level risks
+
+---
+
+## 📄 Security Evidence
+
+* Full ARKO report: [`security-report-2026-04-07.html`](./security-report-2026-04-07.html)
+* Detailed remediation log: [`SECURITY-LAB.md`](./SECURITY-LAB.md)
 
 ---
 
@@ -122,39 +125,18 @@ npm run dev
 ```
 
 Open in browser:
-
 http://127.0.0.1:8788
 
-Login (demo account):
-
+Login:
 [merchant@demo.com](mailto:merchant@demo.com)
 Demo1234!
-
----
-
-## 🧠 What This Project Demonstrates
-
-* Building full-stack applications using AI tooling (Cursor)
-* Identifying real security vulnerabilities in generated code
-* Using ARKO inside Cursor for security analysis
-* Applying secure coding practices in Node.js applications
-* Iterative DevSecOps workflow (Build → Scan → Fix)
-
----
-
-## 📌 Next Steps
-
-* Continue remediation of all ARKO-LAB vulnerabilities
-* Re-scan after each fix to measure improvement
-* Document each vulnerability and fix in detail
-* Improve overall security posture and reduce hackable score
 
 ---
 
 ## 📖 Disclaimer
 
 This project is for educational purposes only.
-All payment data is simulated and does not represent real financial information.
+All payment data is simulated.
 
 ---
 
