@@ -29,6 +29,106 @@ Next remediation batch will focus on:
 3. removing hardcoded seeded credentials
 4. enforcing ownership checks in payment processing
 
+---
+
+## ✅ Remediation Phase 5 – Token, Secrets & Authorization Hardening
+
+### Overview
+
+Following the Phase 4 re-scan, a new set of critical vulnerabilities was identified relating to token exposure, API key handling, and missing authorization checks in key application flows.
+
+This phase focused on securing authentication mechanisms, protecting sensitive credentials, and enforcing proper authorization across critical endpoints.
+
+---
+
+### 🔐 Issues Addressed
+
+* API keys exposed in frontend code and UI
+* Hardcoded API keys in database seeding
+* Admin impersonation token exposed in API responses
+* Password reset token exposed in API responses
+* Missing authorization checks on payment processing endpoint
+
+---
+
+### 🛠️ Fix Implementation
+
+#### 1. Removed Token Exposure in Auth Flows
+
+* Stopped returning JWT tokens in JSON responses
+* Ensured tokens are only stored in secure httpOnly cookies
+* Refactored password reset flow to avoid exposing reset tokens in responses
+
+---
+
+#### 2. Secured API Key Handling
+
+* Removed full API keys from frontend state and UI
+* Implemented masking for API keys (e.g. `sk_live_****abcd`)
+* Ensured full API keys are only accessible server-side
+
+---
+
+#### 3. Removed Hardcoded Secrets
+
+* Eliminated hardcoded API keys from database seed data
+* Introduced dynamic or environment-based key generation
+* Ensured no sensitive credentials are embedded in source code
+
+---
+
+#### 4. Enforced Authorization on Payment Processing
+
+* Added ownership validation for:
+
+  * customer_id
+  * card_id
+* Ensured all payment operations are scoped to `req.user.merchant_id`
+* Prevented unauthorized transaction execution across tenants
+
+---
+
+### 📊 Impact
+
+* Eliminated multiple Critical vulnerabilities related to token and credential exposure
+* Strengthened authentication and authorization boundaries
+* Reduced risk of account takeover and API abuse
+* Improved overall platform security posture
+
+---
+
+### 🧠 Security Insight
+
+This phase highlights a critical principle:
+
+> Sensitive tokens and credentials should never be exposed to the client.
+
+Even temporary exposure (e.g. password reset tokens) can lead to:
+
+* account takeover
+* privilege escalation
+* API abuse
+
+Secure systems must ensure:
+
+* secrets remain server-side
+* access is strictly controlled
+* authorization is enforced at every layer
+
+---
+
+### 📈 Result
+
+* Significant reduction in Critical and High severity findings
+* Improved ARKO security score
+* Transition from surface-level vulnerabilities to deeper system-level concerns
+
+---
+
+### 📌 Notes
+
+At this stage, the nature of vulnerabilities began to shift from implementation issues to architectural and design considerations, indicating increased system maturity.
+
 
 ## ✅ Remediation Phase 3 – Sensitive Data Protection
 
