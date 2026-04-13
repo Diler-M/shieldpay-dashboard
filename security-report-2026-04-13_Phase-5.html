@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Report - ShieldPlay | Arko</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --accent:#00FF85;
+  --accent-rgb:0,255,133;
+  --purple:#818CF8;
+  --purple-rgb:129,140,248;
+  --amber:#F59E0B;
+  --amber-rgb:245,158,11;
+  --red:#EF4444;
+  --red-rgb:239,68,68;
+  --cyan:#22D3EE;
+  --bg:#030711;
+  --card:rgba(255,255,255,0.03);
+  --card-border:rgba(255,255,255,0.06);
+  --card-hover:rgba(255,255,255,0.06);
+  --text:#E2E8F0;
+  --text-muted:#94A3B8;
+  --text-dim:#64748B;
+  --radius:14px;
+  --mono:'Consolas','Courier New',monospace;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* Mesh background */
+.mesh{position:fixed;inset:0;z-index:0;filter:blur(120px);opacity:0.4;pointer-events:none}
+.blob{position:absolute;border-radius:50%}
+.blob-1{width:60vw;height:60vw;background:radial-gradient(circle,rgba(var(--accent-rgb),0.25),transparent);top:-20%;left:-15%}
+.blob-2{width:45vw;height:45vw;background:radial-gradient(circle,rgba(var(--purple-rgb),0.2),transparent);bottom:-15%;right:-10%}
+.blob-3{width:30vw;height:30vw;background:radial-gradient(circle,rgba(var(--amber-rgb),0.08),transparent);top:40%;left:50%}
+
+/* Noise overlay */
+.noise{position:fixed;inset:0;z-index:1;opacity:0.03;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+.container{max-width:900px;margin:0 auto;padding:40px 24px;position:relative;z-index:2}
+
+/* Header */
+.report-header{padding:48px 0 32px;text-align:center;position:relative;z-index:2}
+.report-header svg{filter:drop-shadow(0 0 20px rgba(var(--accent-rgb),0.15));margin-bottom:16px}
+.report-project{font-family:var(--mono);font-size:13px;color:var(--text-muted);letter-spacing:0.03em}
+.report-date{font-size:12px;color:var(--text-dim);margin-top:4px}
+.header-line{width:80px;height:2px;background:linear-gradient(90deg,var(--accent),var(--purple));margin:20px auto 0;border-radius:2px}
+
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:20px;
+  text-align:center;
+  backdrop-filter:blur(20px);
+  position:relative;
+  overflow:hidden;
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent)}
+.stat-value{font-size:28px;font-weight:700}
+.stat-value.critical{color:var(--red)}
+.stat-value.accent{color:var(--accent)}
+.stat-value.amber{color:var(--amber)}
+.stat-value.purple{color:var(--purple)}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px}
+
+/* Sections */
+section{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:var(--radius);
+  padding:28px;
+  margin-bottom:16px;
+  backdrop-filter:blur(20px);
+  position:relative;
+  overflow:hidden;
+}
+section::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 5%,rgba(var(--accent-rgb),0.1) 30%,rgba(var(--purple-rgb),0.06) 70%,transparent 95%)}
+h2{font-size:16px;font-weight:600;color:var(--accent);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.06);letter-spacing:0.01em}
+h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px}
+
+/* Tags */
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500;background:rgba(255,255,255,0.05);color:var(--text-muted);margin:2px 4px 2px 0;border:1px solid rgba(255,255,255,0.06)}
+.tag-risk{background:rgba(var(--red-rgb),0.08);color:var(--red);border-color:rgba(var(--red-rgb),0.15)}
+.tag-compliance{background:rgba(var(--purple-rgb),0.08);color:var(--purple);border-color:rgba(var(--purple-rgb),0.15)}
+
+/* Summary */
+.summary-desc{font-size:14px;color:var(--text-muted);margin-bottom:16px;line-height:1.7}
+
+/* Severity badges */
+.severity-badge{display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:600;color:#030711;text-transform:uppercase;letter-spacing:0.5px}
+
+/* Vuln table */
+.vuln-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
+.vuln-table th{text-align:left;padding:10px 12px;background:rgba(255,255,255,0.04);color:var(--text-dim);font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:0.08em}
+.vuln-table th:first-child{border-radius:var(--radius) 0 0 0}
+.vuln-table th:last-child{border-radius:0 var(--radius) 0 0}
+.vuln-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+.vuln-table tr:last-child td{border-bottom:none}
+.vuln-table tr:hover td{background:rgba(255,255,255,0.02)}
+.vuln-title{font-weight:500}
+.vuln-file{font-size:12px;color:var(--text-dim)}
+.vuln-file code{background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;font-size:11px;font-family:var(--mono)}
+
+/* Vuln cards */
+.vuln-card{border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;margin-bottom:12px;background:rgba(255,255,255,0.01)}
+.vuln-card-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.vuln-card-title{font-weight:600;font-size:14px}
+.vuln-card-location{margin-bottom:8px}
+.vuln-card-location code{background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;font-size:12px;color:var(--purple);font-family:var(--mono)}
+.vuln-card p{font-size:13px;color:var(--text-muted);margin-bottom:8px}
+.vuln-rec{font-size:13px;color:var(--accent);padding:12px;background:rgba(var(--accent-rgb),0.04);border:1px solid rgba(var(--accent-rgb),0.1);border-radius:8px;margin-top:8px}
+.code-block{margin:8px 0}
+.code-block pre{background:rgba(0,0,0,0.4);color:#e2e8f0;padding:14px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.5;font-family:var(--mono);border:1px solid rgba(255,255,255,0.04)}
+
+/* Threats */
+.threat-section{margin-bottom:20px}
+.threat-section-title{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:12px}
+.threat-card{border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;margin-bottom:10px;background:rgba(255,255,255,0.01)}
+.threat-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.threat-card-name{font-weight:600;font-size:14px}
+.threat-mitigated{font-size:11px;color:var(--accent);font-weight:600;padding:2px 10px;border-radius:99px;background:rgba(var(--accent-rgb),0.08);border:1px solid rgba(var(--accent-rgb),0.15)}
+.threat-vuln-count{font-size:11px;color:var(--red);font-weight:600;padding:2px 10px;border-radius:99px;background:rgba(var(--red-rgb),0.08);border:1px solid rgba(var(--red-rgb),0.15)}
+.threat-card p{font-size:13px;color:var(--text-muted);margin-bottom:10px}
+.threat-meta{font-size:12px;color:var(--text-dim)}
+.threat-meta div{margin-bottom:4px}
+.threat-meta strong{color:var(--text-muted)}
+
+/* Risk Assessment */
+.ra-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.ra-card{padding:16px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+.ra-card-label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);margin-bottom:8px}
+.ra-card-value{font-size:16px;font-weight:700}
+.ra-criticality{color:var(--amber)}
+.ra-card-tags{display:flex;flex-wrap:wrap;gap:4px}
+.muted{color:var(--text-dim);font-size:12px}
+
+/* Recommendations */
+.rec-summary-bar{margin-bottom:20px}
+.rec-summary-text{font-size:13px;color:var(--text-muted);margin-bottom:8px;display:flex;justify-content:space-between}
+.rec-bar-outer{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden}
+.rec-bar-inner{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:99px}
+.rec-category-card{margin-bottom:20px}
+.rec-category-title{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-dim);padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);margin-bottom:8px}
+.rec-row{padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.rec-row:last-child{border-bottom:none}
+.rec-row-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rec-row-title{font-weight:500;font-size:13px;flex:1}
+.rec-status-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600}
+.rec-implemented{background:rgba(var(--accent-rgb),0.1);color:var(--accent);border:1px solid rgba(var(--accent-rgb),0.2)}
+.rec-partial{background:rgba(var(--amber-rgb),0.1);color:var(--amber);border:1px solid rgba(var(--amber-rgb),0.2)}
+.rec-missing{background:rgba(var(--red-rgb),0.1);color:var(--red);border:1px solid rgba(var(--red-rgb),0.2)}
+.urgency{font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px}
+.urgency-high{background:rgba(var(--red-rgb),0.1);color:var(--red);border:1px solid rgba(var(--red-rgb),0.15)}
+.urgency-medium{background:rgba(var(--amber-rgb),0.1);color:var(--amber);border:1px solid rgba(var(--amber-rgb),0.15)}
+.urgency-low{background:rgba(var(--accent-rgb),0.06);color:var(--accent);border:1px solid rgba(var(--accent-rgb),0.1)}
+.rec-scenario{font-size:12px;color:var(--text-dim);margin-top:4px;font-style:italic}
+
+.af-list{margin-top:8px;font-size:12px}
+.af-item{padding:3px 0;color:var(--text-dim)}
+.af-item code{background:rgba(255,255,255,0.05);padding:1px 5px;border-radius:3px;font-size:11px;font-family:var(--mono)}
+.af-enforced{color:var(--accent)}
+.af-not-enforced{color:var(--red)}
+
+/* Info columns */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.info-col ul{padding-left:20px;font-size:13px;color:var(--text-muted)}
+.info-col li{margin-bottom:6px}
+
+/* Footer */
+.report-footer{text-align:center;padding:32px;color:var(--text-dim);font-size:12px;margin-top:20px;position:relative;z-index:2}
+.report-footer a{color:var(--accent);text-decoration:none}
+
+/* Resolved items */
+.resolved-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.03);font-size:13px}
+.resolved-item:last-child{border-bottom:none}
+.resolved-title{font-weight:500;flex:1}
+.resolved-file{background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:4px;font-size:11px;font-family:var(--mono);color:var(--text-dim)}
+
+@media print{
+  body{background:#030711!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .mesh,.noise{display:none}
+  .severity-badge,.rec-status-badge,.urgency,.threat-mitigated,.threat-vuln-count{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section{break-inside:avoid}
+}
+@media(max-width:700px){
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .ra-grid{grid-template-columns:1fr}
+  .info-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+</div>
+<div class="noise"></div>
+
+<div class="report-header">
+    <svg width="200" height="54" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg">
+        <text x="300" y="115" font-family="Sora,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-weight="600" font-size="120" text-anchor="middle">
+            <tspan fill="#41DC7A">AR</tspan><tspan dx="2" fill="#FFFFFF">K</tspan><tspan dx="2" fill="#FFFFFF">O</tspan>
+        </text>
+    </svg>
+    <div class="report-project">ShieldPlay</div>
+    <div class="report-date">April 13, 2026 at 17:15 UTC &middot; 4m 1s</div>
+    <div class="header-line"></div>
+</div>
+
+<div class="container">
+
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-value critical">17</div>
+            <div class="stat-label">Vulnerabilities</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value critical">3</div>
+            <div class="stat-label">Critical</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value amber">6</div>
+            <div class="stat-label">High</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value accent">14%</div>
+            <div class="stat-label">Controls Secured</div>
+        </div>
+    </div>
+
+    <section>
+                <h2>Risk Assessment</h2>
+                <div class="ra-grid">
+                    <div class="ra-card">
+                        <div class="ra-card-label">Criticality</div>
+                        <div class="ra-card-value ra-criticality">MISSION CRITICAL</div>
+                    </div>
+                    <div class="ra-card">
+                        <div class="ra-card-label">Sensitive Data Types</div>
+                        <div class="ra-card-tags"><span class="tag tag-risk">PII (Personal Info)</span><span class="tag tag-risk">Credentials/Secrets</span><span class="tag tag-risk">Financial Data</span></div>
+                    </div>
+                    <div class="ra-card">
+                        <div class="ra-card-label">Application Flows</div>
+                        <div class="ra-card-tags"><span class="tag">Audit Logging</span><span class="tag">Data Export</span><span class="tag">user_registration</span><span class="tag">Sessions</span><span class="tag">Payment</span><span class="tag">webhook_handling</span><span class="tag">Authentication</span></div>
+                    </div>
+                    <div class="ra-card">
+                        <div class="ra-card-label">Compliance</div>
+                        <div class="ra-card-tags"><span class="tag tag-compliance">SOC2</span><span class="tag tag-compliance">GDPR</span><span class="tag tag-compliance">PCI_DSS</span><span class="tag tag-compliance">CCPA</span><span class="tag tag-compliance">ISO27001</span></div>
+                    </div>
+                </div>
+            </section>
+
+    <section>
+        <h2>Application Summary</h2>
+        <p class="summary-desc">ShieldPay is a payment processing and merchant management platform built with Express backend and React frontend. It handles user authentication, merchant accounts, customer management, card processing, payment transactions, and provides admin/analytics capabilities with JWT-based security.</p>
+        <h3>Technology Stack</h3>
+        <div style="margin-bottom:16px"><span class="tag">Express.js</span><span class="tag">React</span><span class="tag">SQLite</span><span class="tag">JWT</span><span class="tag">bcrypt</span><span class="tag">React Router</span><span class="tag">Vitest</span><span class="tag">Vite</span></div>
+        <div class="info-grid" style="margin-top:16px"><div class="info-col">
+                <h3>Data Flows</h3>
+                <ul><li>Data enters via REST API endpoints (registration, login, payment processing, customer/card management)</li><li>Authentication via JWT tokens stored in httpOnly cookies; password hashing with bcrypt</li><li>Data processed through Express route handlers with rate limiting and permission checks</li><li>Data persisted to SQLite database (user accounts, merchants, customers, cards, transactions, API keys)</li><li>Data exits via API responses, exports, webhooks, and admin reporting endpoints</li></ul>
+            </div><div class="info-col">
+                <h3>Attack Surface</h3>
+                <ul><li>Authentication endpoints: /register, /login, /logout, /reset-password (21 input validation issues detected)</li><li>Admin impersonation endpoint: POST /impersonate/:id (no additional authorization checks)</li><li>Payment processing: POST /process (handles sensitive transaction data)</li><li>API key management: GET/POST /api-keys (credential exposure risk)</li><li>Data export: GET /export (potential information disclosure)</li><li>Webhook handling: GET /webhooks (URL validation concerns)</li><li>User enumeration via timing attacks on login/registration</li><li>Rate limiting bypass vectors on registration and password reset</li></ul>
+            </div></div>
+    </section>
+
+    <section>
+        <h2>Threat Model</h2>
+        <div class="threat-section">
+                <h3 class="threat-section-title">Worst Case Scenarios</h3>
+                <div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">Complete Payment Data Breach via Admin Impersonation</span>
+                        <span class="threat-vuln-count">6 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits the POST /impersonate/:id endpoint which lacks additional authorization checks to impersonate admin accounts. Once authenticated as admin, attacker accesses all merchant accounts, customer data, card information, and transaction history across the entire platform. The SQLite database containing sensitive payment card data, customer PII, and financial transactions is fully compromised.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Complete exposure of all payment card data and customer PII leading to PCI-DSS violations, regulatory fines (GDPR, PCI), class-action lawsuits, complete loss of merchant trust, business shutdown. Financial liability for fraudulent transactions across all merchants. Estimated impact: millions in fines, legal costs, and reputational damage that destroys the business.</div>
+                        <div><strong>Attack Vector:</strong> 1) Attacker creates legitimate merchant account. 2) Exploits impersonation endpoint with sequential ID enumeration to identify admin user IDs. 3) Uses POST /impersonate/:id without proper authorization checks to obtain admin JWT token. 4) Uses admin privileges to access /export endpoint and extract complete database. 5) Harvests all payment card data, API keys, and customer information.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">Mass Financial Fraud via Payment Processing Manipulation</span>
+                        <span class="threat-vuln-count">2 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits the 21 input validation issues in authentication endpoints combined with weaknesses in POST /process payment endpoint to inject malicious transaction data. By manipulating payment amounts, merchant IDs, or transaction statuses, attacker redirects funds, creates fraudulent refunds, or processes unauthorized charges across multiple merchant accounts.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Large-scale financial theft affecting multiple merchants and customers. Direct monetary loss through fraudulent transactions, chargebacks, and refunds. Merchant accounts drained of funds. Platform liability for all fraudulent transactions. Loss of payment processor relationships. Regulatory investigation and potential criminal charges. Estimated impact: hundreds of thousands to millions in direct financial loss.</div>
+                        <div><strong>Attack Vector:</strong> 1) Exploit input validation vulnerabilities to bypass authentication or elevate privileges. 2) Analyze POST /process endpoint for parameter tampering opportunities (amount, merchant_id, status). 3) Submit crafted payment requests with manipulated data to redirect funds or create fraudulent transactions. 4) Use timing attacks and rate limiting bypass on registration to create multiple attacker-controlled merchant accounts. 5) Automate fraudulent transaction processing across compromised accounts.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">API Key Compromise Leading to Systemic Access</span>
+                        <span class="threat-vuln-count">1 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits credential exposure risks in GET/POST /api-keys endpoints to harvest API keys for all merchants. These keys provide programmatic access to payment processing, customer data, and transaction capabilities. Combined with webhook URL validation concerns, attacker establishes persistent backdoor access and real-time monitoring of all platform transactions.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Complete compromise of merchant integrations and third-party access. Attacker gains ability to process payments, access customer data, and monitor transactions for all merchants in real-time. Persistent access even after password changes. Webhook manipulation allows data exfiltration to attacker-controlled servers. Loss of merchant trust, platform shutdown, regulatory violations. Estimated impact: complete business failure, multi-million dollar liability.</div>
+                        <div><strong>Attack Vector:</strong> 1) Exploit authentication vulnerabilities or impersonation endpoint to gain elevated access. 2) Access GET /api-keys endpoint to enumerate and extract all merchant API keys. 3) Use stolen API keys to access merchant accounts programmatically. 4) Manipulate GET /webhooks endpoint to register attacker-controlled URLs for real-time transaction monitoring. 5) Establish persistent access through webhook callbacks and API key usage that bypasses normal authentication.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">SQLite Database File Theft and Offline Attack</span>
+                        <span class="threat-mitigated">Mitigated</span>
+                    </div>
+                    <p>Attacker exploits path traversal, information disclosure via /export endpoint, or server misconfiguration to directly access and download the SQLite database file. Once obtained, attacker performs offline analysis to extract all data including password hashes, payment information, and API keys. Bcrypt hashes are subjected to offline cracking attacks to recover plaintext passwords.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Complete data breach with all historical data compromised. Attacker gains unlimited time to crack password hashes offline, eventually compromising admin and merchant accounts. All payment card data, customer PII, transaction history, and API keys exposed. Enables follow-on attacks including credential stuffing, identity theft, and financial fraud. PCI-DSS violation, GDPR fines, complete loss of customer trust. Estimated impact: business-ending event with multi-million dollar liability.</div>
+                        <div><strong>Attack Vector:</strong> 1) Exploit /export endpoint with path traversal or authorization bypass to access SQLite database file. 2) Download complete database file to attacker infrastructure. 3) Perform offline analysis to extract all tables and data. 4) Use GPU-accelerated bcrypt cracking to recover passwords for high-value accounts. 5) Use recovered credentials and extracted API keys for account takeover and fraud. 6) Sell complete database on dark web markets.</div>
+                    </div>
+                </div>
+            </div><div class="threat-section">
+                <h3 class="threat-section-title">Likely Attack Scenarios</h3>
+                <div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">User Enumeration via Timing Attacks</span>
+                        <span class="threat-vuln-count">1 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits timing differences in login and registration endpoints to enumerate valid user accounts and email addresses. By measuring response times, attacker identifies which accounts exist on the platform, building a target list for credential stuffing and phishing attacks.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Disclosure of valid user accounts and merchant email addresses. Enables targeted phishing campaigns against merchants. Facilitates credential stuffing attacks using leaked password databases. Privacy violation exposing platform user base. Moderate impact: increased risk of account compromise and targeted attacks.</div>
+                        <div><strong>Attack Vector:</strong> 1) Send login requests with known invalid vs potentially valid usernames. 2) Measure response time differences (bcrypt verification takes longer for valid users). 3) Automate enumeration across common email patterns and domains. 4) Build database of valid merchant accounts. 5) Launch targeted credential stuffing or phishing campaigns against enumerated accounts.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">Rate Limiting Bypass on Registration and Password Reset</span>
+                        <span class="threat-vuln-count">2 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker bypasses rate limiting on registration and password reset endpoints using IP rotation, header manipulation, or distributed requests. This enables brute force attacks on password reset tokens, mass account creation for fraud, and denial of service through resource exhaustion.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Platform abuse through mass fake account creation. Successful brute force of password reset tokens leading to account takeover. Resource exhaustion causing service degradation for legitimate users. Increased fraud risk from disposable attacker accounts. Moderate to high impact: account compromise and platform abuse.</div>
+                        <div><strong>Attack Vector:</strong> 1) Identify rate limiting implementation weaknesses (IP-based only, no distributed rate limiting). 2) Use proxy rotation or VPN services to bypass IP-based limits. 3) Manipulate X-Forwarded-For headers if trusted by application. 4) Automate registration of hundreds of fake merchant accounts. 5) Brute force password reset tokens within rate limit windows. 6) Use compromised accounts for fraudulent transactions.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">JWT Token Manipulation and Privilege Escalation</span>
+                        <span class="threat-mitigated">Mitigated</span>
+                    </div>
+                    <p>Attacker attempts to manipulate JWT tokens to escalate privileges from merchant to admin role. By exploiting weak JWT validation, missing signature verification, or algorithm confusion attacks (e.g., switching from RS256 to HS256), attacker modifies role claims in the token to gain unauthorized admin access.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Unauthorized access to admin functionality including user impersonation, data export, and platform-wide analytics. Ability to view and modify all merchant accounts. Access to sensitive configuration and API keys. High impact: complete authorization bypass and potential data breach.</div>
+                        <div><strong>Attack Vector:</strong> 1) Capture valid JWT token from authenticated merchant session. 2) Decode JWT and analyze structure and claims. 3) Attempt algorithm confusion attack (none algorithm, HS256 with public key). 4) Modify role claim from &#x27;merchant&#x27; to &#x27;admin&#x27;. 5) Re-encode token and submit with modified claims. 6) If successful, access admin endpoints like /impersonate, /export, and admin analytics.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">SQL Injection via Input Validation Gaps</span>
+                        <span class="threat-vuln-count">1 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits the 21 detected input validation issues across authentication and data management endpoints to inject SQL commands. SQLite database is particularly vulnerable to injection attacks that can read arbitrary data, modify records, or extract the entire database through UNION-based or blind injection techniques.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Unauthorized data access including payment information, customer PII, and credentials. Ability to modify transaction records or user permissions. Potential for complete database extraction. High impact: data breach, financial fraud, and compliance violations.</div>
+                        <div><strong>Attack Vector:</strong> 1) Identify endpoints with input validation issues (registration, login, customer/card management). 2) Test for SQL injection using SQLite-specific payloads. 3) Exploit injection points to extract data using UNION SELECT or blind injection. 4) Target sensitive tables (users, transactions, cards, api_keys). 5) Exfiltrate data through error messages or timing-based techniques. 6) Modify transaction records or elevate account privileges through UPDATE/INSERT injection.</div>
+                    </div>
+                </div><div class="threat-card">
+                    <div class="threat-card-header">
+                        <span class="threat-card-name">Session Fixation and Cookie Theft</span>
+                        <span class="threat-vuln-count">4 vulnerabilities found</span>
+                    </div>
+                    <p>Attacker exploits JWT session management with cookie fallback to perform session fixation or steal session tokens. By intercepting httpOnly cookies through XSS vulnerabilities, man-in-the-middle attacks, or subdomain attacks, attacker hijacks authenticated sessions to impersonate legitimate users.</p>
+                    <div class="threat-meta">
+                        <div><strong>Impact:</strong> Account takeover of merchant and admin accounts. Unauthorized access to payment processing and customer data. Ability to perform transactions as compromised user. Moderate to high impact depending on compromised account privileges.</div>
+                        <div><strong>Attack Vector:</strong> 1) Identify XSS vulnerabilities in React frontend or API responses. 2) Inject malicious script to exfiltrate JWT tokens from cookies or localStorage. 3) Alternatively, perform session fixation by forcing victim to use attacker-controlled session token. 4) Use stolen/fixed session to authenticate as victim. 5) Access merchant dashboard, process payments, or export customer data. 6) For admin sessions, gain platform-wide access.</div>
+                    </div>
+                </div>
+            </div>
+    </section>
+
+    <section>
+                <h2>Security Recommendations</h2>
+                <div class="rec-summary-bar">
+                    <div class="rec-summary-text">
+                        <span>2 of 14 controls secured</span>
+                        <span>14%</span>
+                    </div>
+                    <div class="rec-bar-outer"><div class="rec-bar-inner" style="width:14%"></div></div>
+                </div>
+                <div class="rec-category-card">
+                    <div class="rec-category-title">Protecting Data</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">A database breach exposes all your users&#x27; private data</span>
+                            <span class="urgency urgency-high">Fix Now</span>
+                        </div>
+                        <div class="rec-scenario">If someone gets your database file, they can read everything in plain text</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-07_Phase-1.html:291</code> - Threat model references &#x27;dump entire SQLite database containing unencrypted payment data&#x27; indicating lack of encryption at rest</div><div class="af-item "> <code>shieldpay/backend/routes/cards.js:81</code> - CVV correctly not stored (empty string), but PAN storage encryption status unclear from provided code</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/frontend/src/pages/NewPaymentPage.jsx:46</code> - Full card PAN transmitted to client-side violates PCI-DSS; should use tokenization and only send masked values.</div></div>
+                    </div><div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Passwords and personal data are leaking into your logs</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">An attacker accesses log files and finds passwords, credit card numbers, and emails in plain text</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-13_Phase-4.html:274</code> - Data flow notes &#x27;sensitive tokens exposed in JSON responses&#x27; indicating tokens not masked in logs/responses</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/cards.js:30</code> - Card data including CVV returned in API responses without masking</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/auth.js:137</code> - No evidence of password masking in logs - sensitive data may be logged during registration</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/transactions.js:43</code> - Full PAN exposed in API response - violates PCI-DSS requirement to mask card data</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/settings.js:41</code> - API keys masked via maskApiKey function showing only last 4 characters</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/cards.js:81</code> - CVV explicitly stored as empty string ensuring sensitive auth data never persisted per PCI DSS</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/frontend/src/pages/NewPaymentPage.jsx:46</code> - Full PAN visible in browser memory and network responses; sensitive data not properly masked before client transmission.</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Login &amp; Passwords</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-implemented">Secure</span>
+                            <span class="rec-row-title">Your passwords could be stolen in a breach</span>
+                            
+                        </div>
+                        <div class="rec-scenario">If your database leaks, attackers crack plain-text passwords in minutes</div>
+                        <div class="af-list"><div class="af-item af-enforced">&#10003; <code>security-report-2026-04-07_Phase-1.html:269</code> - Application summary confirms &#x27;password hashing with bcrypt&#x27; is implemented for credential storage</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:139</code> - Password hashing with bcrypt: const hash = bcrypt.hashSync(password, 10) uses industry-standard algorithm with cost factor 10</div></div>
+                    </div><div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Attackers could guess passwords by trying thousands of combinations</span>
+                            <span class="urgency urgency-high">Fix Now</span>
+                        </div>
+                        <div class="rec-scenario">A bot tries millions of password combinations on your login page until one works</div>
+                        <div class="af-list"><div class="af-item "> <code>security-report-2026-04-07_Phase-1.html:277</code> - Report mentions &#x27;rate limiting&#x27; exists but also identifies &#x27;Rate limiting bypass vectors on registration and password reset&#x27;</div><div class="af-item "> <code>shieldpay/backend/routes/auth.js:89</code> - Rate limiting exists on login (5 attempts per 15min) but relies on spoofable X-Forwarded-For header</div><div class="af-item "> <code>shieldpay/backend/routes/auth.js:152</code> - Rate limiting on password reset (1 per 15min) but relies on spoofable X-Forwarded-For header</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:137</code> - Application context states &#x27;Express route handlers with rate limiting&#x27; indicating rate limiting is implemented</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/payments.js:52</code> - In-memory rate limiting that doesn&#x27;t persist across restarts or work in distributed deployments</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/transactions.js:7</code> - In-memory rate limiting on transaction reads that resets on restart</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/cards.js:9</code> - In-memory rate limiting on card reads without distributed coordination</div></div>
+                    </div><div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">A stolen password is all it takes to break in</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">Someone gets a user&#x27;s password from a phishing email and logs in without any second check</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/auth.js:169</code> - No MFA required for sensitive impersonation endpoint - only role check performed</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Encryption</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-implemented">Secure</span>
+                            <span class="rec-row-title">Your encryption could be cracked with modern tools</span>
+                            
+                        </div>
+                        <div class="rec-scenario">Outdated algorithms like MD5 or DES are broken in seconds, exposing everything you thought was protected</div>
+                        <div class="af-list"><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/settings.js:48</code> - API keys generated using crypto.randomBytes(32) providing cryptographically secure random values</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Display Safety</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Other users could see a fake version of your app</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">An attacker injects JavaScript that steals cookies and session tokens from your users</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/customers.js:72</code> - No output escaping implemented in backend - relies on frontend to escape customer data when rendering</div><div class="af-item "> <code>shieldpay/frontend/src/pages/LoginPage.jsx:32</code> - React JSX provides default escaping, but relies on backend not returning pre-formatted HTML in error messages.</div><div class="af-item af-enforced">&#10003; <code>shieldpay/frontend/src/pages/TransactionDetailPage.jsx:20</code> - React JSX automatically escapes template literal values, preventing XSS on tx.pan_last4 rendering</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">User Sessions</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">User sessions could be hijacked</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">An attacker steals a session cookie via XSS or network sniffing and impersonates the logged-in user</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-07_Phase-1.html:274</code> - Report indicates &#x27;JWT tokens in localStorage (vulnerable to XSS)&#x27; instead of httpOnly cookies</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:128</code> - JWT stored in httpOnly cookie: res.cookie(&#x27;token&#x27;, token, { httpOnly: true, secure: true, sameSite: &#x27;strict&#x27; })</div></div>
+                    </div><div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Attackers could impersonate your users</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">A stolen or forged JWT token lets someone log in as any user without knowing their password</div>
+                        <div class="af-list"><div class="af-item af-enforced">&#10003; <code>security-report-2026-04-07_Phase-1.html:269</code> - Application uses &#x27;JWT-based authorization&#x27; with tokens for authentication flow</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/middleware/auth.js:34</code> - JWT signature verification with jwt.verify(token, jwtSecret) prevents tampering</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/backend/routes/auth.js:297</code> - Impersonation endpoint returns JWT tokens without proper authorization checks on who can impersonate</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">App Settings</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Your API keys could end up on GitHub</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">Hardcoded secrets in code get committed and scraped by bots within minutes</div>
+                        <div class="af-list"><div class="af-item "> <code>security-report-2026-04-07_Phase-1.html:277</code> - Attack surface mentions &#x27;API key management: GET/POST /api-keys (credential exposure risk)&#x27; but unclear if keys are in environment variables</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/middleware/auth.js:3</code> - JWT secret loaded from environment: const jwtSecret = process.env.JWT_SECRET</div><div class="af-item "> <code>shieldpay/backend/routes/auth.js:1</code> - JWT secret management not visible in provided code - cannot confirm if environment variables are used</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">API Security</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Anyone could fake webhook events to your app</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">An attacker sends fake Stripe payment-success webhooks to grant themselves a free subscription</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-07_Phase-1.html:277</code> - Attack surface identifies &#x27;Webhook handling: GET /webhooks (URL validation concerns)&#x27; suggesting missing signature verification</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Infrastructure</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Enable CloudTrail and Access Logging</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        
+                        
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Error Handling</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">Error messages are giving attackers a roadmap</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">Stack traces in error responses reveal your file structure, database schema, and library versions to attackers</div>
+                        <div class="af-list"><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-13_Phase-4.html:293</code> - Threat model describes &#x27;Attacker extracts data incrementally or dumps entire database&#x27; suggesting error messages may leak information</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:121</code> - Generic error messages used: &#x27;Invalid credentials&#x27; for both invalid email and wrong password</div><div class="af-item "> <code>shieldpay/backend/routes/auth.js:137</code> - Error handling not visible in provided code snippet - cannot confirm safe error messages</div><div class="af-item af-not-enforced">&#10007; <code>shieldpay/frontend/src/pages/NewPaymentPage.jsx:24</code> - Promise.all API calls lack .catch() handlers, but this is code quality not security - client-side errors only visible to user</div></div>
+                    </div>
+                </div><div class="rec-category-card">
+                    <div class="rec-category-title">Activity Tracking</div>
+                    <div class="rec-row">
+                        <div class="rec-row-header">
+                            <span class="rec-status-badge rec-missing">Missing</span>
+                            <span class="rec-row-title">You won&#x27;t know when someone breaks in</span>
+                            <span class="urgency urgency-medium">Fix Soon</span>
+                        </div>
+                        <div class="rec-scenario">An attacker compromises your app but you have no logs to detect it or understand what they accessed</div>
+                        <div class="af-list"><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:170</code> - Audit logging for impersonation attempts: auditImpersonation(req, { targetUserId, outcome })</div><div class="af-item af-enforced">&#10003; <code>shieldpay/backend/routes/auth.js:118</code> - Failed login attempts logged: auditFailedLogin(req, { email, outcome, failuresInWindow })</div><div class="af-item af-not-enforced">&#10007; <code>security-report-2026-04-13_Phase-4.html:297</code> - No audit logging mentioned for sensitive impersonation operations</div></div>
+                    </div>
+                </div>
+            </section>
+
+    <section>
+        <h2>Open Vulnerabilities (17)</h2>
+        <table class="vuln-table"><thead><tr><th>Severity</th><th>Title</th><th>Location</th></tr></thead><tbody><tr>
+                <td><span class="severity-badge" style="background:#EF4444">CRITICAL</span></td>
+                <td class="vuln-title">Admin Impersonation Endpoint - Unauthorized Privilege Escalation</td>
+                <td class="vuln-file"><code>security-report-2026-04-13_Phase-4.html:297</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#EF4444">CRITICAL</span></td>
+                <td class="vuln-title">Deterministic Payment Status Based on Amount - Transaction Manipulation</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/payments.js:72</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#EF4444">CRITICAL</span></td>
+                <td class="vuln-title">Insufficient Authorization Check on Impersonation Endpoint</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/auth.js:169</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">Full Card PAN Processed Client-Side - Data Exposure Risk</td>
+                <td class="vuln-file"><code>shieldpay/frontend/src/pages/NewPaymentPage.jsx:46</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">Full PAN Exposure in Transaction API Response</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/transactions.js:43</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">SQL Injection in Registration Endpoint - merchantName Parameter</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/auth.js:137</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">In-Memory Rate Limiting Bypass via Server Restart or Distributed Deployment</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/payments.js:52</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">No Rate Limiting on Registration Endpoint</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/auth.js:137</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#F59E0B">HIGH</span></td>
+                <td class="vuln-title">X-Forwarded-For Header Spoofing Enables Rate Limit Bypass</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/auth.js:16</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">Unescaped Error Message Rendering - XSS Vulnerability</td>
+                <td class="vuln-file"><code>shieldpay/frontend/src/pages/LoginPage.jsx:32</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">Hardcoded Webhook Configuration - Information Disclosure</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/settings.js:60</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">Missing Email and Phone Validation in Update Endpoint Enables Stored XSS</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/customers.js:84</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">Missing Email and Phone Validation Enables Stored XSS</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/customers.js:72</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">In-Memory Card Read Rate Limiting Bypass</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/cards.js:9</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">In-Memory Transaction Read Rate Limiting Bypass</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/transactions.js:7</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#818CF8">MEDIUM</span></td>
+                <td class="vuln-title">Timing Attack on Login Endpoint Enables User Enumeration</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/auth.js:104</code></td>
+            </tr><tr>
+                <td><span class="severity-badge" style="background:#00FF85">LOW</span></td>
+                <td class="vuln-title">Missing Validation on API Key Name Enables Stored XSS</td>
+                <td class="vuln-file"><code>shieldpay/backend/routes/settings.js:46</code></td>
+            </tr></tbody></table>
+    </section>
+
+    <section><h2>Vulnerability Details</h2><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#EF4444">CRITICAL</span>
+                    <span class="vuln-card-title">Admin Impersonation Endpoint - Unauthorized Privilege Escalation</span>
+                </div>
+                <div class="vuln-card-location"><code>security-report-2026-04-13_Phase-4.html:297</code></div>
+                <p>The /impersonate/:id endpoint allows any authenticated user to impersonate admin accounts without proper authorization checks. The endpoint returns admin JWT tokens in JSON responses, enabling complete platform takeover.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Add role-based authorization check before impersonation: verify current user has &#x27;admin&#x27; role. Implement audit logging for all impersonation attempts. Consider removing endpoint entirely or restricting to super-admin only with MFA requirement.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#EF4444">CRITICAL</span>
+                    <span class="vuln-card-title">Deterministic Payment Status Based on Amount - Transaction Manipulation</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/payments.js:72</code></div>
+                <p>Payment approval/decline is determined solely by amount comparison (&gt;1000 = DECLINED, &lt;=1000 = APPROVED) without any actual payment processing, card validation, or fraud checks. This is a mock payment processor that allows attackers to reliably predict and manipulate transaction outcomes.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Integrate real payment gateway (Stripe, PayPal, etc.) with proper authorization flows. Remove deterministic status logic. Implement fraud detection, card validation, and proper payment processing workflows.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#EF4444">CRITICAL</span>
+                    <span class="vuln-card-title">Insufficient Authorization Check on Impersonation Endpoint</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/auth.js:169</code></div>
+                <p>The /impersonate/:id endpoint only verifies admin role but lacks additional authorization controls. Any user who achieves admin role (via JWT manipulation, privilege escalation, or compromised credentials) can impersonate any user through sequential ID enumeration.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Implement additional authorization: require MFA re-authentication for impersonation, log all impersonation attempts with alerting, restrict impersonation to specific user roles, implement time-limited impersonation tokens, and add approval workflow for sensitive impersonations.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">Full Card PAN Processed Client-Side - Data Exposure Risk</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/frontend/src/pages/NewPaymentPage.jsx:46</code></div>
+                <p>Full card PAN (c.pan) is passed to client-side JavaScript function maskPanForDisplay(). While masked for display, the full PAN is accessible in browser memory, developer tools, and network responses, violating PCI-DSS requirements.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Backend should only return masked PAN (e.g., last 4 digits) to frontend. Store card_id for payment processing, never send full PAN to client. Use tokenization for card references.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">Full PAN Exposure in Transaction API Response</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/transactions.js:43</code></div>
+                <p>The GET /:id endpoint returns full card PAN (Primary Account Number) in transaction responses via &#x27;cards.pan&#x27; field. This violates PCI-DSS requirement 3.3 which prohibits displaying full PAN except for specific business needs.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Remove &#x27;cards.pan&#x27; from SELECT query. Only return &#x27;cards.pan_last4&#x27; for display purposes. If full PAN is needed for specific operations, create separate privileged endpoint with additional authorization and audit logging.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">SQL Injection in Registration Endpoint - merchantName Parameter</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/auth.js:137</code></div>
+                <p>The /register endpoint accepts merchantName parameter and passes it directly to SQL INSERT without proper parameterization. While the code uses db.prepare(), the merchantName value is concatenated into the query string.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Use parameterized queries with placeholders: db.prepare(&#x27;INSERT INTO merchants (name) VALUES (?)&#x27;).run(merchantName). Add input validation for merchantName (length limits, character whitelist). Implement prepared statements consistently across all database operations.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">In-Memory Rate Limiting Bypass via Server Restart or Distributed Deployment</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/payments.js:52</code></div>
+                <p>Payment rate limiting uses in-memory Map storage without persistence or distributed coordination. Rate limit state is lost on server restart, process crash, or in multi-instance deployments, allowing attackers to bypass limits entirely.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Implement distributed rate limiting using Redis or similar shared state store. Persist rate limit counters with TTL. Use rate limiting middleware that works across multiple instances (e.g., express-rate-limit with Redis store).</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">No Rate Limiting on Registration Endpoint</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/auth.js:137</code></div>
+                <p>The /register endpoint lacks rate limiting controls. Combined with X-Forwarded-For spoofing (finding #1), attackers can create unlimited merchant accounts for resource exhaustion, account enumeration preparation, and fraudulent transaction staging.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Implement rate limiting on registration (e.g., 5 registrations per IP per hour), add CAPTCHA verification, require email verification before account activation, implement phone verification for merchant accounts, and monitor for bulk registration patterns.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#F59E0B">HIGH</span>
+                    <span class="vuln-card-title">X-Forwarded-For Header Spoofing Enables Rate Limit Bypass</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/auth.js:16</code></div>
+                <p>The clientIp() function unconditionally trusts the X-Forwarded-For header without validation. An attacker can spoof this header to bypass IP-based rate limiting on authentication endpoints, enabling brute force attacks and account enumeration.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Only trust X-Forwarded-For when behind a verified proxy. Validate the header format and use the rightmost trusted IP. Implement distributed rate limiting using Redis/Memcached keyed by user identifier (email) in addition to IP.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">Unescaped Error Message Rendering - XSS Vulnerability</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/frontend/src/pages/LoginPage.jsx:32</code></div>
+                <p>API error messages are rendered directly in the DOM without sanitization. If the backend returns error messages containing user-controlled data or HTML/JavaScript, it will execute in the browser context.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Ensure backend never includes user input in error messages, or sanitize all error messages with DOMPurify before rendering. Use structured error codes instead of dynamic messages.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">Hardcoded Webhook Configuration - Information Disclosure</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/settings.js:60</code></div>
+                <p>The /webhooks endpoint returns a hardcoded example webhook URL instead of querying actual merchant-specific webhook configurations from the database. This means all merchants see the same fake data regardless of their actual webhook settings.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Replace hardcoded array with database query: &#x27;SELECT * FROM webhooks WHERE merchant_id = ? ORDER BY created_at DESC&#x27;. Implement proper webhook CRUD operations with merchant_id isolation.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">Missing Email and Phone Validation in Update Endpoint Enables Stored XSS</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/customers.js:84</code></div>
+                <p>The PUT /customers/:id endpoint accepts email and phone without validation, identical to the POST endpoint vulnerability. Attackers can inject malicious payloads when updating existing customer records.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Apply same validation as POST endpoint: 1) Email format validation, 2) Phone format validation, 3) Output escaping in frontend, 4) CSP headers.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">Missing Email and Phone Validation Enables Stored XSS</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/customers.js:72</code></div>
+                <p>The POST /customers endpoint accepts email and phone parameters without validation or sanitization. While SQL injection is prevented by parameterized queries, these unvalidated fields are stored in the database and likely rendered in the frontend without escaping, creating stored XSS vulnerability.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> 1) Add email format validation (regex for valid email structure), 2) Add phone format validation (numeric with optional formatting), 3) Implement output escaping in React components rendering customer data, 4) Use Content-Security-Policy headers to mitigate XSS impact.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">In-Memory Card Read Rate Limiting Bypass</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/cards.js:9</code></div>
+                <p>Card read rate limiting uses in-memory Map storage per merchant_id without persistence or distributed coordination. Attackers can bypass limits via server restart, multi-instance deployment, or by using multiple merchant accounts.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Implement distributed rate limiting with Redis. Add global rate limiting across all merchants. Consider per-IP rate limiting in addition to per-merchant limits. Implement proper PCI-compliant card data handling.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">In-Memory Transaction Read Rate Limiting Bypass</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/transactions.js:7</code></div>
+                <p>Transaction read rate limiting uses in-memory Map storage without persistence. Similar to payment rate limiting, this can be bypassed via server restart or in distributed deployments, allowing unlimited transaction enumeration.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Implement distributed rate limiting using Redis with TTL-based counters. Apply rate limiting at API gateway level for consistency across all instances.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#818CF8">MEDIUM</span>
+                    <span class="vuln-card-title">Timing Attack on Login Endpoint Enables User Enumeration</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/auth.js:104</code></div>
+                <p>The /login endpoint performs bcrypt.compareSync() only when user exists, creating measurable timing differences. When user doesn&#x27;t exist (line 116-121), response is immediate. When user exists but password wrong (line 122-127), bcrypt comparison takes ~100ms. This timing difference leaks user existence.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> Always perform bcrypt comparison even for non-existent users: generate a dummy hash and compare against provided password. This ensures constant-time response regardless of user existence. Alternatively, use a constant-time comparison delay.</div>
+            </div><div class="vuln-card">
+                <div class="vuln-card-header">
+                    <span class="severity-badge" style="background:#00FF85">LOW</span>
+                    <span class="vuln-card-title">Missing Validation on API Key Name Enables Stored XSS</span>
+                </div>
+                <div class="vuln-card-location"><code>shieldpay/backend/routes/settings.js:46</code></div>
+                <p>The POST /api-keys endpoint accepts a &#x27;name&#x27; parameter without validation. While parameterized queries prevent SQL injection, the unvalidated name could contain XSS payloads that execute when API key lists are rendered in the frontend.</p>
+                
+                <div class="vuln-rec"><strong>Recommendation:</strong> 1) Validate API key name (alphanumeric, spaces, hyphens only), 2) Limit length to reasonable value (e.g., 50 chars), 3) Escape output in frontend when rendering API key names.</div>
+            </div></section>
+
+    <section><h2>Remediated (39)</h2><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">API Keys Exposed in Frontend Code</span> <code class="resolved-file">shieldpay/frontend/src/pages/SettingsPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Hardcoded API Key in Database Seeding</span> <code class="resolved-file">shieldpay/backend/db.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Admin Impersonation Token Exposed in API Response</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Password Reset Token Exposed in API Response</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Missing Authorization Check on Payment Processing - IDOR Vulnerability</span> <code class="resolved-file">shieldpay/backend/routes/payments.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">SQL Injection in Customer Search</span> <code class="resolved-file">shieldpay/backend/routes/customers.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">CORS Misconfiguration - Wildcard Origin with Credentials</span> <code class="resolved-file">shieldpay/backend/server.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Missing role-based access control on /admin/merchants endpoint</span> <code class="resolved-file">shieldpay/backend/routes/admin.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Missing role-based access control on /admin/users endpoint</span> <code class="resolved-file">shieldpay/backend/routes/admin.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Missing Authorization Check on Impersonate Endpoint</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Full Payment Card Data Stored in Plaintext</span> <code class="resolved-file">shieldpay/backend/db.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">Sensitive Payment Card Data Exposure in Frontend</span> <code class="resolved-file">shieldpay/frontend/src/pages/TransactionDetailPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">IDOR - Missing merchant_id ownership check on PUT card update</span> <code class="resolved-file">shieldpay/backend/routes/cards.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#EF4444">CRITICAL</span> <span class="resolved-title">IDOR - Missing merchant_id ownership check on GET card details</span> <code class="resolved-file">shieldpay/backend/routes/cards.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Sensitive Configuration Data Exposure in Frontend State</span> <code class="resolved-file">shieldpay/frontend/src/pages/SettingsPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">JWT Token Exposure Risk via Credentials Configuration</span> <code class="resolved-file">shieldpay/frontend/src/api.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">XSS via Unsanitized Customer Name in Transaction List</span> <code class="resolved-file">shieldpay/frontend/src/pages/TransactionsPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">XSS via Unescaped Error Message Rendering</span> <code class="resolved-file">shieldpay/frontend/src/pages/LoginPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Weak Default Admin Password in Environment Variable</span> <code class="resolved-file">shieldpay/backend/db.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Weak Card Token Generation Using Deterministic HMAC</span> <code class="resolved-file">shieldpay/backend/utils/cardSecurity.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Weak API Key Generation and Exposure</span> <code class="resolved-file">shieldpay/backend/routes/settings.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">No Rate Limiting on Payment Processing Endpoint</span> <code class="resolved-file">shieldpay/backend/routes/payments.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Impersonation Endpoint Lacks Audit Trail and Monitoring</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Missing Rate Limiting on Password Reset Endpoint</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Missing Rate Limiting on Login Endpoint</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">JWT Token Stored in Vulnerable localStorage</span> <code class="resolved-file">shieldpay/frontend/src/pages/LoginPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Sensitive Payment Card Data Exposure in DOM</span> <code class="resolved-file">shieldpay/frontend/src/pages/CardsPage.jsx</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Stack Trace and Request Body Exposure in Error Responses</span> <code class="resolved-file">shieldpay/backend/server.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Sensitive Data Exposure in Request Logging</span> <code class="resolved-file">shieldpay/backend/server.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">Weak Default JWT Secret</span> <code class="resolved-file">shieldpay/backend/middleware/auth.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">IDOR - Missing merchant_id ownership check on DELETE card</span> <code class="resolved-file">shieldpay/backend/routes/cards.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">IDOR - Customer Deletion Without Ownership Check</span> <code class="resolved-file">shieldpay/backend/routes/customers.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">IDOR - Customer Update Without Ownership Check</span> <code class="resolved-file">shieldpay/backend/routes/customers.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">IDOR - Customer Retrieval Without Ownership Check</span> <code class="resolved-file">shieldpay/backend/routes/customers.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#F59E0B">HIGH</span> <span class="resolved-title">IDOR - Missing merchant_id authorization check on transaction detail endpoint</span> <code class="resolved-file">shieldpay/backend/routes/transactions.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#818CF8">MEDIUM</span> <span class="resolved-title">LIKE Wildcard Injection in Customer Search</span> <code class="resolved-file">shieldpay/backend/routes/customers.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#818CF8">MEDIUM</span> <span class="resolved-title">Transaction ID Enumeration via Missing Rate Limiting</span> <code class="resolved-file">shieldpay/backend/routes/transactions.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#818CF8">MEDIUM</span> <span class="resolved-title">CORS Misconfiguration - Requests Without Origin Header Allowed</span> <code class="resolved-file">shieldpay/backend/server.js</code></div><div class="resolved-item"><span class="severity-badge" style="background:#818CF8">MEDIUM</span> <span class="resolved-title">User Enumeration via Password Reset Endpoint</span> <code class="resolved-file">shieldpay/backend/routes/auth.js</code></div></section>
+
+    
+
+</div>
+
+<div class="report-footer">
+    <svg width="80" height="22" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle;margin-bottom:2px">
+        <text x="300" y="115" font-family="Sora,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif" font-weight="600" font-size="120" text-anchor="middle">
+            <tspan fill="#41DC7A">AR</tspan><tspan dx="2" fill="#FFFFFF">K</tspan><tspan dx="2" fill="#FFFFFF">O</tspan>
+        </text>
+    </svg>
+    <span style="margin-left:6px">AI-powered security analysis</span>
+</div>
+
+</body>
+</html>
