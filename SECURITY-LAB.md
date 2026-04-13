@@ -115,7 +115,9 @@ All fixes were implemented iteratively using ARKO inside Cursor, following a con
 
 workflow to validate remediation effectiveness.
 
-## Baseline
+
+
+## ✅ Remediation Phase 1 - Baseline
 
 * Initial hackable score: **80%**
 * Current hackable score: **78%**
