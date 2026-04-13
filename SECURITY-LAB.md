@@ -2,6 +2,34 @@
 
 This document tracks the security assessment and remediation of ShieldPay using ARKO inside Cursor.
 
+## ⚠️ Phase 4 Re-Scan Regression
+
+### Overview
+
+After the initial platform-hardening changes, a deeper ARKO re-scan surfaced additional issues related to token exposure, secret handling, frontend configuration exposure, and payment authorization.
+
+### Key Finding
+
+Earlier remediation work remains valid and is still marked as resolved, but the latest scan identified newly introduced or newly surfaced issues in authentication flows, settings management, and payment processing.
+
+### New Critical Issues Identified
+
+* API keys exposed in frontend code
+* Hardcoded API key in database seeding
+* Admin impersonation token exposed in API response
+* Password reset token exposed in API response
+* Missing authorization check on payment processing
+
+### Response Plan
+
+Next remediation batch will focus on:
+
+1. removing token exposure from auth flows
+2. masking or removing API keys from frontend state and UI
+3. removing hardcoded seeded credentials
+4. enforcing ownership checks in payment processing
+
+
 ## ✅ Remediation Phase 3 – Sensitive Data Protection
 
 ### Overview
