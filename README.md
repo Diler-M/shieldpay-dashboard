@@ -22,6 +22,25 @@ This project simulates that real-world scenario:
 
 ---
 
+## 📊 Current Metrics
+
+* Initial hackable score: **80%**
+* Current hackable score: **78%**
+* ARKO findings at baseline: **19**
+
+  * **9 Critical**
+  * **10 High**
+* First remediation completed: **SQL Injection in customer search**
+
+---
+
+## 📄 Security Evidence
+
+* Full ARKO export: [`security-report-2026-04-07.html`](./security-report-2026-04-07.html)
+* Detailed remediation tracker: [`SECURITY-LAB.md`](./SECURITY-LAB.md)
+
+---
+
 ## 🏗️ Architecture
 
 * **Frontend:** React (Vite)
