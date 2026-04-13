@@ -2,6 +2,80 @@
 
 This document tracks the security assessment and remediation of ShieldPay using ARKO inside Cursor.
 
+## ✅ Remediation Phase 3 – Sensitive Data Protection
+
+### Overview
+
+This phase focused on securing sensitive financial data across the platform, including how payment card information is stored, processed, and exposed.
+
+---
+
+### 🔐 Issues Addressed
+
+* Plaintext storage of payment card data (PAN + CVV)
+* Exposure of sensitive card data in API responses
+* Exposure of full card details in frontend UI and DOM
+
+---
+
+### 🛠️ Fix Implementation
+
+#### 1. Removed CVV Storage
+
+* CVV field completely removed from database schema
+* No longer stored, processed, or returned by any API
+
+#### 2. Implemented PAN Masking
+
+* Full card numbers replaced with masked values
+* Only last 4 digits retained for display purposes
+
+#### 3. Secured API Responses
+
+* Removed sensitive fields from all responses
+* Introduced safe response objects (last4, brand only)
+
+#### 4. Updated Frontend Rendering
+
+* Replaced full PAN display with masked format
+* Removed all CVV references from UI
+* Ensured no sensitive data is rendered in DOM
+
+---
+
+### 📊 Impact
+
+* Eliminated exposure of financial data
+* Reduced multiple Critical and High severity findings
+* Improved compliance with PCI DSS principles
+* Significantly reduced breach risk
+
+---
+
+### 🧠 Security Insight
+
+Sensitive data should follow strict handling rules:
+
+* Never store what you don’t need
+* Never expose what users shouldn’t see
+* Always minimise data at rest and in transit
+
+Failure to do so can lead to:
+
+* Financial data breaches
+* Regulatory violations
+* Loss of user trust
+
+---
+
+### 📈 Result
+
+* Further reduction in vulnerability count
+* Improved hackable score
+* All sensitive data exposure issues resolved
+
+---
+
 ## ✅ Remediation Phase 2 – Access Control (RBAC + IDOR)
 
 ### Current Status
