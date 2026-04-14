@@ -1,4 +1,4 @@
-# ShieldPay Security Lab
+# ShieldPay Security Diary
 
 > A full DevSecOps case study demonstrating iterative security remediation of an AI-generated application using ARKO (Build → Scan → Fix → Re-scan).
 
