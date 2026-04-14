@@ -25,7 +25,7 @@ This project demonstrates how AI-generated applications can introduce real-world
 * Vulnerabilities remediated: **14+**
 * Final state: Major risks eliminated, remaining issues at architectural level
 
-👉 Full breakdown: [SECURITY-LAB.md](./SECURITY-LAB.md)
+👉 Full breakdown: [SECURITY-DIARY.md](./SECURITY-DIARY.md)
 
 ---
 
