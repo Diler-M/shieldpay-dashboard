@@ -1,4 +1,4 @@
-# ShieldPay – DevSecOps Security Case Study
+# ShieldPay – DevSecOps Security
 
 A full-stack payment platform built using AI (Cursor), then secured using ARKO through an iterative DevSecOps workflow.
 
