@@ -30,7 +30,7 @@ This phase focused on resolving critical authorization vulnerabilities across th
 
 * Missing RBAC on `/admin/users`
 * Missing RBAC on `/admin/merchants`
-* Missing authorization on `/impersonate/:id`
+* Missing authorisation on `/impersonate/:id`
 
 #### Insecure Direct Object References (IDOR)
 
@@ -59,7 +59,7 @@ This phase focused on resolving critical authorization vulnerabilities across th
 
 ### 🧠 Security Insight
 
-> Authentication does not equal authorization.
+> Authentication does not equal authorisation.
 
 ---
 
@@ -122,15 +122,15 @@ A deeper ARKO re-scan surfaced additional vulnerabilities after initial fixes.
 * API keys exposed in frontend
 * Hardcoded API keys in database
 * Token exposure in auth flows
-* Missing authorization in payment processing
+* Missing authorisation in payment processing
 
 ---
 
-## ✅ Remediation Phase 5 – Token, Secrets & Authorization Hardening
+## ✅ Remediation Phase 5 – Token, Secrets & Authorisation Hardening
 
 ### Overview
 
-Focused on securing authentication, secrets, and critical authorization flows.
+Focused on securing authentication, secrets, and critical authorisation flows.
 
 ---
 
@@ -139,7 +139,7 @@ Focused on securing authentication, secrets, and critical authorization flows.
 * API key exposure
 * Hardcoded credentials
 * Token exposure in responses
-* Missing authorization on payment processing
+* Missing authorisation on payment processing
 
 ---
 
@@ -156,7 +156,7 @@ Focused on securing authentication, secrets, and critical authorization flows.
 ### 📊 Impact
 
 * Eliminated multiple Critical vulnerabilities
-* Strengthened authentication and authorization boundaries
+* Strengthened authentication and authorisation boundaries
 
 ---
 
