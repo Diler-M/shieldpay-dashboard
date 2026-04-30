@@ -111,7 +111,7 @@ This project demonstrates how vulnerabilities evolve from:
 
 ## 📄 Security Evidence
 
-* Full ARKO report: [`security-report-2026-04-07.html`](./security-report-2026-04-07.html)
+* Full ARKO report: [`security-report-2026-04-13_Phase-6.html`](./ssecurity-report-2026-04-13_Phase-6.html)
 * Detailed remediation log: [`SECURITY-LAB.md`](./SECURITY-LAB.md)
 
 ---
